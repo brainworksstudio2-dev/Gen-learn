@@ -245,6 +245,52 @@ export const getAttendance = async (gen?: string): Promise<Attendance[]> => {
   }
 };
 
+export const getStudentAttendance = async (studentId: string): Promise<Attendance[]> => {
+  const path = 'attendance';
+  try {
+    const q = query(collection(db, path), where('student_id', '==', studentId));
+    const snapshot = await getDocs(q);
+    // Sort client-side to avoid needing a composite index for student_id + date
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Attendance))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return [];
+  }
+};
+
+export const markStudentAttendance = async (gen: string) => {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  const path = 'attendance';
+  const today = new Date().toISOString().split('T')[0];
+  
+  try {
+    // Check if already marked today
+    const q = query(
+      collection(db, path), 
+      where('student_id', '==', auth.currentUser.uid),
+      where('date', '==', today)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      throw new Error("Attendance already marked for today");
+    }
+
+    const newRecord = {
+      student_id: auth.currentUser.uid,
+      date: today,
+      gen: gen,
+      status: 100,
+      score: 100,
+      timestamp: new Date().toISOString()
+    };
+    
+    return await addDoc(collection(db, path), newRecord);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
 // --- Users ---
 export const getAllProfiles = async (gen?: string): Promise<User[]> => {
   const path = 'users';
