@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Student or Admin profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "photoURL": { "type": "string" },
+        "gen": { "type": "string" },
+        "onboarded": { "type": "boolean" },
+        "bio": { "type": "string" },
+        "github": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "twitter": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Task for students to complete",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "deadline": { "type": "string" },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "gen": { "type": "string" },
+        "max_score": { "type": "number" },
+        "module": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "week": { "type": "number" }
+      },
+      "required": ["title", "deadline", "gen"]
+    },
+    "Submission": {
+      "title": "Submission",
+      "description": "Student submission for an assignment",
+      "type": "object",
+      "properties": {
+        "assignment_id": { "type": "string" },
+        "student_id": { "type": "string" },
+        "student_name": { "type": "string" },
+        "link": { "type": "string" },
+        "submitted_at": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "graded"] },
+        "score": { "type": "number" },
+        "feedback": { "type": "string" },
+        "gen": { "type": "string" }
+      },
+      "required": ["assignment_id", "student_id", "link"]
+    },
+    "Material": {
+      "title": "Material",
+      "description": "Educational resource (video or slide)",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["video", "slide"] },
+        "url": { "type": "string" },
+        "gen": { "type": "string" },
+        "topic": { "type": "string" },
+        "week": { "type": "number" }
+      },
+      "required": ["title", "type", "url", "gen"]
+    },
+    "Roadmap": {
+      "title": "Roadmap Item",
+      "description": "Curriculum module",
+      "type": "object",
+      "properties": {
+        "week": { "type": "number" },
+        "topic": { "type": "string" },
+        "project": { "type": "string" },
+        "status": { "type": "string", "enum": ["completed", "current", "upcoming"] },
+        "module": { "type": "string" },
+        "gen": { "type": "string" }
+      },
+      "required": ["week", "topic", "status", "module", "gen"]
+    },
+    "Attendance": {
+      "title": "Attendance Record",
+      "description": "Daily attendance for a student",
+      "type": "object",
+      "properties": {
+        "student_id": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "absent", "late"] },
+        "gen": { "type": "string" }
+      },
+      "required": ["student_id", "date", "status", "gen"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Profiles of all authenticated users"
+    },
+    "assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Central repository of all curricular tasks"
+    },
+    "submissions/{submissionId}": {
+      "schema": "Submission",
+      "description": "Student work products and feedback"
+    },
+    "materials/{materialId}": {
+      "schema": "Material",
+      "description": "Videos and slides for cohort learning"
+    },
+    "roadmap/{roadmapId}": {
+      "schema": "Roadmap",
+      "description": "The sequence of topics and modules"
+    },
+    "attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Daily student check-ins"
+    }
+  }
+}

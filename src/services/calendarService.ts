@@ -1,0 +1,28 @@
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start: { dateTime: string; timeZone: string };
+  end: { dateTime: string; timeZone: string };
+  htmlLink: string;
+  hangoutLink?: string; // This is the Google Meet link
+}
+
+export const fetchUpcomingEvents = async (accessToken: string): Promise<CalendarEvent[]> => {
+  const now = new Date().toISOString();
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&maxResults=10&orderBy=startTime&singleEvents=true`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch calendar events');
+  }
+
+  const data = await res.json();
+  return data.items || [];
+};

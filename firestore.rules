@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Primitives & Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function getProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'joshuadoe168@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getProfile().role == 'admin')
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Default Deny ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['uid', 'name', 'email', 'role']) &&
+               data.uid is string &&
+               data.role in ['student', 'admin'] &&
+               data.uid == userId;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming()) && incoming().role == 'student';
+      allow update: if isSignedIn() && userId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoURL', 'onboarded', 'bio', 'github', 'linkedin', 'twitter', 'gen']) &&
+                    isValidUser(incoming());
+      allow write: if isAdmin();
+    }
+
+    // --- Assignments ---
+    match /assignments/{assignmentId} {
+      function isValidAssignment(data) {
+        return data.keys().hasAll(['title', 'deadline', 'gen']) &&
+               data.title is string && data.title.size() <= 200 &&
+               data.gen is string;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidAssignment(incoming());
+      allow update: if isAdmin() && isValidAssignment(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // --- Roadmap ---
+    match /roadmap/{roadmapId} {
+      function isValidRoadmap(data) {
+        return data.keys().hasAll(['week', 'topic', 'status', 'module', 'gen']) &&
+               data.module is string && data.gen is string;
+      }
+
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- Materials ---
+    match /materials/{materialId} {
+      function isValidMaterial(data) {
+        return data.keys().hasAll(['title', 'type', 'url', 'gen']) &&
+               data.url is string && data.url.size() <= 1000;
+      }
+
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- Submissions ---
+    match /submissions/{submissionId} {
+      function isValidSubmission(data) {
+        return data.keys().hasAll(['assignment_id', 'student_id', 'link']) &&
+               data.student_id == request.auth.uid;
+      }
+
+      allow list: if isSignedIn() && (isAdmin() || resource.data.student_id == request.auth.uid);
+      allow get: if isSignedIn() && (isAdmin() || resource.data.student_id == request.auth.uid);
+      
+      allow create: if isSignedIn() && isValidSubmission(incoming()) && 
+                    (!('score' in incoming())) && (incoming().status == 'pending' || !('status' in incoming()));
+      
+      allow update: if isSignedIn() && (
+        // Admin grading
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['score', 'feedback', 'status'])) ||
+        // Student updating link before grading
+        (resource.data.student_id == request.auth.uid && existing().status != 'graded' && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['link', 'submitted_at']))
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // --- Attendance ---
+    match /attendance/{attendanceId} {
+      function isValidAttendance(data) {
+        return data.keys().hasAll(['student_id', 'date', 'status', 'gen']) &&
+               data.status in [100, 50, 0];
+      }
+      allow read: if isSignedIn() && (isAdmin() || resource.data.student_id == request.auth.uid);
+      allow write: if isAdmin() && isValidAttendance(incoming());
+    }
+  }
+}
