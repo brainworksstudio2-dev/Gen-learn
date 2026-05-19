@@ -36,6 +36,7 @@ export function ManageAssignments() {
   const [newAssignment, setNewAssignment] = useState({
     title: '',
     description: '',
+    reference_link: '',
     deadline: '',
     gen: selectedGen === 'all' ? 'GEN30' : selectedGen,
     max_score: 100,
@@ -171,6 +172,15 @@ export function ManageAssignments() {
                       className="min-h-[120px] rounded-2xl bg-slate-50 border-0 font-medium"
                       value={newAssignment.description}
                       onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Reference URL (Optional)</Label>
+                    <Input
+                      placeholder="https://docs.google.com/..."
+                      className="h-14 rounded-2xl bg-slate-50 border-0 font-bold"
+                      value={newAssignment.reference_link}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, reference_link: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">

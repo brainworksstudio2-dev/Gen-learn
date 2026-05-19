@@ -143,9 +143,22 @@ export function Assignments() {
                     <CardTitle className="text-3xl font-black text-slate-900 mb-3 uppercase italic tracking-tighter group-hover:text-indigo-600 transition-colors">
                       {assignment.title}
                     </CardTitle>
-                    <CardDescription className="text-slate-500 font-medium text-lg mb-8 leading-relaxed italic">
+                    <CardDescription className="text-slate-500 font-medium text-lg mb-4 leading-relaxed italic whitespace-pre-wrap">
                       "{assignment.description}"
                     </CardDescription>
+                    
+                    {assignment.reference_link && (
+                      <div className="mb-8">
+                        <a 
+                          href={assignment.reference_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors"
+                        >
+                          <ExternalLink size={16} /> Open Reference Material
+                        </a>
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-4 mt-auto">
                       <Dialog open={isSubmitOpen && selectedAssignment?.id === assignment.id} onOpenChange={(open) => {

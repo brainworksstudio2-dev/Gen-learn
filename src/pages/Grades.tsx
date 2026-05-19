@@ -1,21 +1,73 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, Award, Target, BookOpen, Activity, User, ChevronUp, ChevronDown } from 'lucide-react';
+import { TrendingUp, Award, Target, BookOpen, Activity, User, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { calculateGPA } from '@/utils/gpa';
+import { getSubmissionsForUser, getStudentAttendance, getAssignments, getExpectedAttendanceDates } from '@/services/dataService';
 
 export function Grades() {
-  const gpaData = [
-    { name: 'Assignments', value: 40, score: 92, color: '#4F46E5' },
-    { name: 'Exercises', value: 30, score: 85, color: '#10B981' },
-    { name: 'Attendance', value: 30, score: 100, color: '#F59E0B' },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [gpaResult, setGpaResult] = useState<any>(null);
 
-  const historyData = [
-    { name: 'W1', score: 85 },
-    { name: 'W2', score: 88 },
-    { name: 'W3', score: 92 },
-    { name: 'W4', score: 90 },
-    { name: 'W5', score: 95 },
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        // Fetch student's earned points
+        const [submissions, attendanceRecords] = await Promise.all([
+          getSubmissionsForUser(user.uid || user.id),
+          getStudentAttendance(user.uid || user.id)
+        ]);
+
+        // Fetch total expected points for cohort
+        const [assignments, expectedAtt] = await Promise.all([
+          getAssignments(user.gen),
+          getExpectedAttendanceDates(user.gen)
+        ]);
+
+        const earnedAssignments = submissions.length;
+        const expectedAssignments = assignments.length;
+        
+        // Exercises are currently mocked, so we set them to 0/0 or a fixed number.
+        const earnedExercises = 0;
+        const expectedExercises = 2; // based on the 2 mock exercises
+
+        const earnedAttendance = attendanceRecords.filter(a => a.status === 100).length + (attendanceRecords.filter(a => a.status === 50).length * 0.5);
+        
+        const result = calculateGPA(
+          earnedAssignments, expectedAssignments,
+          earnedExercises, expectedExercises,
+          earnedAttendance, expectedAtt
+        );
+
+        setGpaResult(result);
+      } catch (error) {
+        console.error("Error fetching grades:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGrades();
+  }, []);
+
+  if (loading || !gpaResult) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Calculating Grades...</p>
+      </div>
+    );
+  }
+
+  const chartData = [
+    { name: 'Assignments', earned: gpaResult.breakdown.assignments.earned, expected: gpaResult.breakdown.assignments.expected, color: '#4F46E5' },
+    { name: 'Exercises', earned: gpaResult.breakdown.exercises.earned, expected: gpaResult.breakdown.exercises.expected, color: '#10B981' },
+    { name: 'Attendance', earned: gpaResult.breakdown.attendance.earned, expected: gpaResult.breakdown.attendance.expected, color: '#F59E0B' },
   ];
 
   return (
@@ -25,19 +77,19 @@ export function Grades() {
         <Card className="lg:col-span-1 border-0 shadow-sm rounded-3xl bg-slate-900 text-white p-8 overflow-hidden relative">
           <div className="relative z-10">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Current GPA</p>
-            <h2 className="text-7xl font-black tracking-tight mb-4">4.0</h2>
-            <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold uppercase">
-              <ChevronUp size={14} /> 5% from last month
+            <h2 className="text-7xl font-black tracking-tight mb-4">{gpaResult.gpa.toFixed(1)}</h2>
+            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+               Letter Grade: {gpaResult.grade}
             </div>
             
             <div className="mt-8 pt-8 border-t border-slate-800 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Final Score</span>
-                <span className="text-xl font-black">92.4%</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Final Average</span>
+                <span className="text-xl font-black">{gpaResult.finalScore.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Total Credits</span>
-                <span className="text-xl font-black">12.0</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Total Points Earned</span>
+                <span className="text-xl font-black">{gpaResult.totalEarned} / {gpaResult.totalExpected}</span>
               </div>
             </div>
           </div>
@@ -52,15 +104,17 @@ export function Grades() {
           </CardHeader>
           <CardContent className="px-0 pt-6 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gpaData} layout="vertical" margin={{ left: 20 }}>
-                <XAxis type="number" hide domain={[0, 100]} />
+              <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
+                <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} stroke="#64748b" fontSize={12} width={100} />
                 <Tooltip 
                   cursor={{ fill: '#f1f5f9' }}
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value, name, props) => [`${props.payload.earned} / ${props.payload.expected} pts`, 'Score']}
                 />
-                <Bar dataKey="score" radius={[0, 8, 8, 0]} barSize={32}>
-                  {gpaData.map((entry, index) => (
+                <Bar dataKey="expected" fill="#e2e8f0" radius={[0, 8, 8, 0]} barSize={32} />
+                <Bar dataKey="earned" radius={[0, 8, 8, 0]} barSize={32} style={{ transform: 'translateY(-32px)' }}>
+                  {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
@@ -77,14 +131,10 @@ export function Grades() {
                <CardDescription className="text-slate-500 font-bold text-sm uppercase tracking-wide">Progress over weeks</CardDescription>
             </CardHeader>
             <CardContent className="px-0 pt-6 h-64">
-               <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={historyData}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} stroke="#64748b" />
-                    <YAxis axisLine={false} tickLine={false} fontSize={12} stroke="#64748b" />
-                    <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '16px', border: 'none' }} />
-                    <Bar dataKey="score" fill="#4F46E5" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-               </ResponsiveContainer>
+               <div className="flex flex-col items-center justify-center h-full text-center space-y-2 opacity-50">
+                  <Activity className="w-12 h-12 text-slate-400" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500">History graph coming soon</p>
+               </div>
             </CardContent>
          </Card>
 

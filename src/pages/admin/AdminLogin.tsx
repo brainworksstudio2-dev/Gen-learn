@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { GraduationCap, Mail, ShieldCheck, ArrowLeft, KeyRound, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { googleSignIn } from '@/lib/auth';
+import { googleSignIn, promoteCurrentUserToAdmin } from '@/lib/auth';
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -26,13 +26,18 @@ export function AdminLogin() {
     }
   };
 
-  const handlePinSubmit = (e: React.FormEvent) => {
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     if (pin === adminPin) {
-      toast.success("Security clearance verified.");
-      navigate('/admin');
+      try {
+        await promoteCurrentUserToAdmin();
+        toast.success("Security clearance verified.");
+        navigate('/admin');
+      } catch (err) {
+        toast.error("Failed to update role. Please try again.");
+      }
     } else {
       toast.error("Invalid PIN. Access denied.");
       setPin('');

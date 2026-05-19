@@ -17,7 +17,8 @@ const mockExercises: Exercise[] = [
     description: 'Solve 5 problems using map, filter, and reduce.',
     deadline: '2026-05-19T23:59:59Z',
     gen: 'GEN10C2',
-    max_score: 100
+    max_score: 100,
+    reference_link: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'
   },
   {
     id: '2',
@@ -67,9 +68,22 @@ export function Exercises() {
                 <CardTitle className="text-2xl font-black text-slate-900 mb-3 leading-tight uppercase italic tracking-tighter group-hover:text-amber-600 transition-colors">
                   {exercise.title}
                 </CardTitle>
-                <CardDescription className="text-slate-500 font-medium mb-8 leading-relaxed italic">
+                <CardDescription className="text-slate-500 font-medium mb-4 leading-relaxed italic whitespace-pre-wrap">
                   "{exercise.description}"
                 </CardDescription>
+
+                {exercise.reference_link && (
+                  <div className="mb-8">
+                    <a 
+                      href={exercise.reference_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-xl transition-colors"
+                    >
+                      <Activity size={16} /> Open Reference Material
+                    </a>
+                  </div>
+                )}
 
                 <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
                   <div className="space-y-1">

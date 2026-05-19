@@ -27,6 +27,7 @@ export interface Assignment {
   title: string;
   description: string;
   instructions?: string;
+  reference_link?: string;
   deadline: string;
   gen: string;
   max_score: number;

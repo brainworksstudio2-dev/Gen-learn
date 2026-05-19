@@ -245,6 +245,23 @@ export const getAttendance = async (gen?: string): Promise<Attendance[]> => {
   }
 };
 
+export const getExpectedAttendanceDates = async (gen: string): Promise<number> => {
+  const path = 'attendance';
+  try {
+    const q = query(collection(db, path), where('gen', '==', gen));
+    const snapshot = await getDocs(q);
+    const uniqueDates = new Set<string>();
+    snapshot.docs.forEach(doc => {
+      const data = doc.data() as Attendance;
+      uniqueDates.add(data.date);
+    });
+    return uniqueDates.size;
+  } catch (error) {
+    console.error("Failed to get expected attendance dates:", error);
+    return 0;
+  }
+};
+
 export const getStudentAttendance = async (studentId: string): Promise<Attendance[]> => {
   const path = 'attendance';
   try {

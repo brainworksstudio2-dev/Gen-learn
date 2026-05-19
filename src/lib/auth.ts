@@ -92,20 +92,9 @@ export const googleSignIn = async (desiredRole: 'student' | 'admin' = 'student')
       dbUser = profileSnap.data();
       // If logging in as admin but previously was student, or vice versa, 
       // we might want to prevent or update. 
-      // For now, respect the existing role but if logging into /admin/login specifically, 
-      // maybe we check if they are authorized to be admin?
+      // We don't auto-promote here anymore. 
+      // Promotion to admin happens after successful PIN entry in AdminLogin.tsx
       
-      // Safety: If they log in via /admin/login but aren't admins, we might want to flag it
-      if (desiredRole === 'admin' && dbUser.role !== 'admin') {
-        // Option 1: Auto-promote (only for testing - in production should be manual)
-        // Option 2: Throw error
-        // Let's assume the first admin needs to be set manually or we allow the first login to be admin if specific email
-        const adminWhiteslist = ['joshuadoe168@gmail.com']; // From metadata
-        if (adminWhiteslist.includes(firebaseUser.email || '')) {
-           dbUser.role = 'admin';
-           await setDoc(profileRef, { role: 'admin' }, { merge: true });
-        }
-      }
     }
 
     localStorage.setItem('user', JSON.stringify(dbUser));
@@ -127,6 +116,21 @@ export const googleSignIn = async (desiredRole: 'student' | 'admin' = 'student')
 
 export const getAccessToken = (): string | null => {
   return cachedAccessToken;
+};
+
+export const promoteCurrentUserToAdmin = async () => {
+  if (auth.currentUser) {
+    const profileRef = doc(db, 'users', auth.currentUser.uid);
+    await setDoc(profileRef, { role: 'admin' }, { merge: true });
+    
+    // Update local storage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      user.role = 'admin';
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }
 };
 
 export const logout = async () => {

@@ -11,27 +11,23 @@ export const GRADE_SCALE = [
 ];
 
 export function calculateGPA(
-  submissions: Submission[],
-  exercises: Submission[],
-  attendance: Attendance[]
+  earnedAssignments: number,
+  expectedAssignments: number,
+  earnedExercises: number,
+  expectedExercises: number,
+  earnedAttendance: number,
+  expectedAttendance: number
 ) {
-  // Assignments = 40%
-  // Exercises = 30%
-  // Attendance = 30%
-
-  const avgSubmissions = submissions.length > 0
-    ? (submissions.reduce((acc, s) => acc + (s.score || 0), 0) / (submissions.length * 100)) * 100
-    : 0;
+  // Simple 1-point system:
+  // Final Score = (Total Earned Points) / (Total Expected Points) * 100
   
-  const avgExercises = exercises.length > 0
-    ? (exercises.reduce((acc, e) => acc + (e.score || 0), 0) / (exercises.length * 100)) * 100
-    : 0;
+  const totalEarned = earnedAssignments + earnedExercises + earnedAttendance;
+  const totalExpected = expectedAssignments + expectedExercises + expectedAttendance;
 
-  const avgAttendance = attendance.length > 0
-    ? attendance.reduce((acc, a) => acc + a.score, 0) / attendance.length
-    : 0;
-
-  const finalScore = (avgSubmissions * 0.4) + (avgExercises * 0.3) + (avgAttendance * 0.3);
+  let finalScore = 0;
+  if (totalExpected > 0) {
+    finalScore = (totalEarned / totalExpected) * 100;
+  }
 
   const gradeInfo = GRADE_SCALE.find(g => Math.round(finalScore) >= g.min) || GRADE_SCALE[GRADE_SCALE.length - 1];
 
@@ -39,10 +35,12 @@ export function calculateGPA(
     finalScore: Math.round(finalScore * 10) / 10,
     grade: gradeInfo.grade,
     gpa: gradeInfo.gpa,
+    totalEarned,
+    totalExpected,
     breakdown: {
-      assignments: Math.round(avgSubmissions * 10) / 10,
-      exercises: Math.round(avgExercises * 10) / 10,
-      attendance: Math.round(avgAttendance * 10) / 10
+      assignments: { earned: earnedAssignments, expected: expectedAssignments },
+      exercises: { earned: earnedExercises, expected: expectedExercises },
+      attendance: { earned: earnedAttendance, expected: expectedAttendance }
     }
   };
 }
