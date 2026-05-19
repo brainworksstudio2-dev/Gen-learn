@@ -16,7 +16,7 @@ export function ManageMaterials() {
   const [loading, setLoading] = useState(true);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [selectedGen, setSelectedGen] = useState(() => localStorage.getItem('admin_selected_gen') || 'all');
-  
+
   const [newMaterial, setNewMaterial] = useState({
     title: '',
     type: 'video' as 'video' | 'slide',
@@ -91,7 +91,7 @@ export function ManageMaterials() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
           <Input placeholder="Search materials..." className="pl-10 h-12 rounded-xl border-slate-200 bg-white" />
         </div>
-        
+
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="bg-indigo-600 hover:bg-indigo-700 font-bold h-12 rounded-xl px-6">
@@ -106,16 +106,16 @@ export function ManageMaterials() {
             <div className="grid grid-cols-2 gap-6 pt-4">
               <div className="space-y-2 col-span-2">
                 <Label className="font-bold text-xs uppercase text-slate-500">Title</Label>
-                <Input 
-                  placeholder="Introduction to Express" 
-                  className="h-12 rounded-xl bg-slate-50 border-0" 
+                <Input
+                  placeholder="Introduction to Express"
+                  className="h-12 rounded-xl bg-slate-50 border-0"
                   value={newMaterial.title}
-                  onChange={(e) => setNewMaterial({...newMaterial, title: e.target.value})}
+                  onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-bold text-xs uppercase text-slate-500">Type</Label>
-                <Select value={newMaterial.type} onValueChange={(v: any) => setNewMaterial({...newMaterial, type: v})}>
+                <Select value={newMaterial.type} onValueChange={(v: any) => setNewMaterial({ ...newMaterial, type: v })}>
                   <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-0">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -127,30 +127,32 @@ export function ManageMaterials() {
               </div>
               <div className="space-y-2">
                 <Label className="font-bold text-xs uppercase text-slate-500">Cohort (GEN)</Label>
-                <select 
+                <select
                   className="w-full h-12 px-4 rounded-xl bg-slate-50 border-0 text-sm font-medium"
                   value={newMaterial.gen}
-                  onChange={(e) => setNewMaterial({...newMaterial, gen: e.target.value})}
+                  onChange={(e) => setNewMaterial({ ...newMaterial, gen: e.target.value })}
                 >
-                   <option value="all">All Cohorts</option>
-                   <option value="GEN30">GEN 30</option>
-                   <option value="GEN31">GEN 31</option>
-                   <option value="GEN32">GEN 32</option>
+                  <option value="all">All Cohorts</option>
+                  <option value="GEN30">GEN 30</option>
+                  <option value="GEN31">GEN 31</option>
+                  <option value="GEN32">GEN 32</option>
+                  <option value="GEN33">GEN 33</option>
+                  <option value="GEN34">GEN 34</option>
                 </select>
               </div>
               <div className="space-y-2 col-span-2">
                 <Label className="font-bold text-xs uppercase text-slate-500">URL</Label>
-                <Input 
-                  placeholder="https://youtube.com/..." 
-                  className="h-12 rounded-xl bg-slate-50 border-0" 
+                <Input
+                  placeholder="https://youtube.com/..."
+                  className="h-12 rounded-xl bg-slate-50 border-0"
                   value={newMaterial.url}
-                  onChange={(e) => setNewMaterial({...newMaterial, url: e.target.value})}
+                  onChange={(e) => setNewMaterial({ ...newMaterial, url: e.target.value })}
                 />
               </div>
             </div>
             <DialogFooter className="pt-8">
-              <Button 
-                onClick={handleUpload} 
+              <Button
+                onClick={handleUpload}
                 disabled={isSaving}
                 className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-lg font-black uppercase"
               >
@@ -189,9 +191,9 @@ export function ManageMaterials() {
                     <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-900">
                       <Edit3 size={18} />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="text-slate-400 hover:text-red-500"
                       onClick={() => handleDelete(m.id)}
                     >

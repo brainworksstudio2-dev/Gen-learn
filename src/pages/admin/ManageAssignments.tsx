@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  FileText, 
-  Plus, 
-  Calendar as CalendarIcon, 
-  CheckCircle2, 
-  Clock, 
-  Loader2, 
+import {
+  FileText,
+  Plus,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Clock,
+  Loader2,
   Search,
   ChevronRight,
   GraduationCap
@@ -52,7 +52,7 @@ export function ManageAssignments() {
       toast.error("Title and deadline are required");
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await addAssignment({
@@ -129,9 +129,9 @@ export function ManageAssignments() {
               Student Submissions
             </TabsTrigger>
           </TabsList>
-          
+
           <div className="flex items-center gap-4">
-            <select 
+            <select
               className="px-4 py-2.5 rounded-xl bg-white border border-slate-100 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-indigo-100 shadow-sm"
               value={selectedModule}
               onChange={(e) => setSelectedModule(e.target.value)}
@@ -141,7 +141,7 @@ export function ManageAssignments() {
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
-            
+
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
                 <Button className="h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-bold group gap-2 shadow-lg shadow-indigo-100 px-6">
@@ -157,63 +157,65 @@ export function ManageAssignments() {
                 <div className="grid grid-cols-2 gap-6 pt-6">
                   <div className="space-y-2 col-span-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Assignment Title</Label>
-                    <Input 
-                      placeholder="e.g. Building an Express API" 
+                    <Input
+                      placeholder="e.g. Building an Express API"
                       className="h-14 rounded-2xl bg-slate-50 border-0 font-bold"
                       value={newAssignment.title}
-                      onChange={(e) => setNewAssignment({...newAssignment, title: e.target.value})}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Description</Label>
-                    <Textarea 
-                      placeholder="Provide detailed instructions..." 
+                    <Textarea
+                      placeholder="Provide detailed instructions..."
                       className="min-h-[120px] rounded-2xl bg-slate-50 border-0 font-medium"
                       value={newAssignment.description}
-                      onChange={(e) => setNewAssignment({...newAssignment, description: e.target.value})}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Deadline</Label>
-                    <Input 
-                      type="date" 
+                    <Input
+                      type="date"
                       className="h-14 rounded-2xl bg-slate-50 border-0 font-bold"
                       value={newAssignment.deadline}
-                      onChange={(e) => setNewAssignment({...newAssignment, deadline: e.target.value})}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, deadline: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Max Score</Label>
-                    <Input 
-                      type="number" 
+                    <Input
+                      type="number"
                       className="h-14 rounded-2xl bg-slate-50 border-0 font-bold"
                       value={newAssignment.max_score}
-                      onChange={(e) => setNewAssignment({...newAssignment, max_score: parseInt(e.target.value)})}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, max_score: parseInt(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Target Generation</Label>
-                    <select 
+                    <select
                       className="w-full h-14 px-4 rounded-2xl bg-slate-50 border-0 font-bold text-sm"
                       value={newAssignment.gen}
-                      onChange={(e) => setNewAssignment({...newAssignment, gen: e.target.value})}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, gen: e.target.value })}
                     >
                       <option value="all">Every Cohort (Announcement Style)</option>
                       <option value="GEN30">GEN 30</option>
                       <option value="GEN31">GEN 31</option>
                       <option value="GEN32">GEN 32</option>
+                      <option value="GEN33">GEN 33</option>
+                      <option value="GEN34">GEN 34</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">Roadmap Module</Label>
-                    <select 
+                    <select
                       className="w-full h-14 px-4 rounded-2xl bg-slate-50 border-0 font-bold text-sm focus:ring-2 focus:ring-indigo-100"
                       value={newAssignment.moduleId}
                       onChange={(e) => {
                         const id = e.target.value;
                         const item = roadmap.find(r => r.id === id);
                         setNewAssignment({
-                          ...newAssignment, 
+                          ...newAssignment,
                           moduleId: id,
                           title: item?.project || newAssignment.title,
                           description: item ? `Deliverable for ${item.module} - ${item.topic}. Goal: ${item.project}` : newAssignment.description
@@ -228,8 +230,8 @@ export function ManageAssignments() {
                   </div>
                 </div>
                 <DialogFooter className="pt-8 bg-white">
-                  <Button 
-                    onClick={handleCreateAssignment} 
+                  <Button
+                    onClick={handleCreateAssignment}
                     className="w-full h-16 rounded-3xl bg-indigo-600 hover:bg-indigo-700 text-lg font-black uppercase tracking-tighter gap-3 shadow-xl shadow-indigo-100"
                     disabled={isSaving}
                   >
@@ -293,9 +295,9 @@ export function ManageAssignments() {
               </motion.div>
             )) : (
               <div className="col-span-full py-20 text-center">
-                 <Search className="w-16 h-16 text-slate-100 mx-auto mb-4" />
-                 <h3 className="text-xl font-black text-slate-300 uppercase italic">No Assignments Found</h3>
-                 <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Selected: {selectedGen}</p>
+                <Search className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                <h3 className="text-xl font-black text-slate-300 uppercase italic">No Assignments Found</h3>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Selected: {selectedGen}</p>
               </div>
             )}
           </div>
@@ -317,35 +319,35 @@ export function ManageAssignments() {
                   {submissions.length > 0 ? submissions.map((sub) => {
                     const assignment = assignments.find(a => a.id === sub.assignment_id);
                     if (!assignment && selectedGen !== 'all') return null;
-                    
+
                     return (
                       <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 overflow-hidden">
-                                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${sub.student_id}`} alt="sub" referrerPolicy="no-referrer" />
-                              </div>
-                              <span className="font-bold text-slate-900">Student #{sub.student_id.slice(-4)}</span>
-                           </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 overflow-hidden">
+                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${sub.student_id}`} alt="sub" referrerPolicy="no-referrer" />
+                            </div>
+                            <span className="font-bold text-slate-900">Student #{sub.student_id.slice(-4)}</span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                           <p className="text-slate-900 font-bold">{assignment?.title || 'Unknown Assignment'}</p>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">{assignment?.gen}</p>
+                          <p className="text-slate-900 font-bold">{assignment?.title || 'Unknown Assignment'}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">{assignment?.gen}</p>
                         </td>
                         <td className="px-6 py-4 text-slate-500">
-                           {new Date(sub.submitted_at).toLocaleDateString()}
+                          {new Date(sub.submitted_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-right">
-                           <Button variant="ghost" size="sm" className="rounded-xl font-bold gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
-                              View Work <ChevronRight size={14} />
-                           </Button>
+                          <Button variant="ghost" size="sm" className="rounded-xl font-bold gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
+                            View Work <ChevronRight size={14} />
+                          </Button>
                         </td>
                       </tr>
                     );
                   }) : (
                     <tr>
                       <td colSpan={4} className="px-6 py-20 text-center">
-                         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No submissions yet</p>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No submissions yet</p>
                       </td>
                     </tr>
                   )}
