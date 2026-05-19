@@ -8,9 +8,11 @@ import {
   Loader2, 
   BookOpen,
   Trophy,
-  GripVertical
+  GripVertical,
+  CheckCircle2,
+  Users
 } from 'lucide-react';
-import { getRoadmap } from '@/services/dataService';
+import { getRoadmap, updateCohortProgress } from '@/services/dataService';
 import { RoadmapItem } from '@/types';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
@@ -20,11 +22,13 @@ import { Badge } from "@/components/ui/badge";
 export function ManageRoadmap() {
   const [roadmap, setRoadmap] = useState<RoadmapItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGen, setSelectedGen] = useState<string>('GEN30');
+  const [updating, setUpdating] = useState<number | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getRoadmap();
+      const data = await getRoadmap(selectedGen);
       setRoadmap(data.sort((a, b) => a.week - b.week));
     } catch (error) {
       console.error(error);
@@ -35,7 +39,24 @@ export function ManageRoadmap() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedGen]);
+
+  const handleUpdateProgress = async (week: number) => {
+    if (selectedGen === 'all') {
+      toast.error("Please select a specific cohort to update progress.");
+      return;
+    }
+    setUpdating(week);
+    try {
+      await updateCohortProgress(selectedGen, week);
+      toast.success(`Updated ${selectedGen} progress to Week ${week}`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update progress");
+    } finally {
+      setUpdating(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -57,6 +78,23 @@ export function ManageRoadmap() {
              <h3 className="text-lg font-black uppercase italic tracking-tight text-slate-900">Standard Programme Roadmap</h3>
              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{roadmap.length} Milestones defined</p>
            </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm shrink-0 w-full md:w-auto">
+            <Users className="w-4 h-4 text-slate-400" />
+            <select 
+              className="bg-transparent border-none text-xs font-black uppercase tracking-widest focus:ring-0 cursor-pointer p-0 w-full"
+              value={selectedGen}
+              onChange={(e) => setSelectedGen(e.target.value)}
+            >
+              <option value="GEN30">GEN 30</option>
+              <option value="GEN31">GEN 31</option>
+              <option value="GEN32">GEN 32</option>
+              <option value="GEN33">GEN 33</option>
+              <option value="GEN34">GEN 34</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -97,6 +135,16 @@ export function ManageRoadmap() {
                           <Badge variant="secondary" className="bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase rounded-lg">
                             {item.module}
                           </Badge>
+                          {item.status === 'current' && (
+                            <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase rounded-lg">
+                              Current Topic
+                            </Badge>
+                          )}
+                          {item.status === 'completed' && (
+                            <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 text-[9px] font-black uppercase rounded-lg">
+                              Completed
+                            </Badge>
+                          )}
                        </div>
                        <div className="flex items-center gap-4">
                          <div className="flex items-center gap-1.5 text-slate-400">
@@ -110,6 +158,29 @@ export function ManageRoadmap() {
                            </div>
                          )}
                        </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Button
+                        variant={item.status === 'current' ? "default" : "outline"}
+                        size="sm"
+                        disabled={updating === item.week || item.status === 'current'}
+                        onClick={() => handleUpdateProgress(item.week)}
+                        className={cn(
+                          "rounded-xl font-black uppercase tracking-widest text-[10px] h-8",
+                          item.status === 'current' ? "bg-emerald-500 text-white opacity-100" : ""
+                        )}
+                      >
+                        {updating === item.week ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : item.status === 'current' ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Active
+                          </>
+                        ) : (
+                          "Set Current"
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

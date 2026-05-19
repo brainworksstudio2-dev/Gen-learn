@@ -12,13 +12,13 @@ export function Roadmap() {
   const [roadmap, setRoadmap] = useState<RoadmapItem[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
-  const currentWeek = 3;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [roadmapData, assignmentsData] = await Promise.all([
-          getRoadmap(),
+          getRoadmap(user.gen),
           getAssignments()
         ]);
         setRoadmap(roadmapData);
@@ -80,8 +80,8 @@ export function Roadmap() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {roadmap.filter(item => item.module === moduleName).map((item, i) => {
-                const isCompleted = item.week < currentWeek;
-                const isCurrent = item.week === currentWeek;
+                const isCompleted = item.status === 'completed';
+                const isCurrent = item.status === 'current';
                 
                 return (
                   <motion.div

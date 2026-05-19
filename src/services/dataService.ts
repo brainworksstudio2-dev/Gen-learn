@@ -9,7 +9,8 @@ import {
   orderBy, 
   onSnapshot,
   Timestamp,
-  getDoc
+  getDoc,
+  setDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/auth';
 import { RoadmapItem, Assignment, Material, Submission, User, Attendance } from '../types';
@@ -64,12 +65,42 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 import { OFFICIAL_CURRICULUM } from '../constants';
 
 // --- Curriculum (Roadmap) ---
-export const getRoadmap = async (): Promise<RoadmapItem[]> => {
-  // Return hardcoded curriculum instead of fetching from Firestore
+export const getCohortProgress = async (gen: string): Promise<number> => {
+  if (!gen || gen === 'all') return 1;
+  try {
+    const docRef = doc(db, 'cohortProgress', gen);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return snap.data().currentWeek || 1;
+    }
+    return 1;
+  } catch (error) {
+    console.error("Failed to get cohort progress:", error);
+    return 1;
+  }
+};
+
+export const updateCohortProgress = async (gen: string, week: number) => {
+  const path = `cohortProgress/${gen}`;
+  try {
+    const docRef = doc(db, 'cohortProgress', gen);
+    await setDoc(docRef, { currentWeek: week, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+};
+
+export const getRoadmap = async (gen?: string): Promise<RoadmapItem[]> => {
+  let currentWeek = 1; // Default
+  if (gen && gen !== 'all') {
+    currentWeek = await getCohortProgress(gen);
+  }
+
+  // Return hardcoded curriculum mapped with dynamic status based on currentWeek
   return OFFICIAL_CURRICULUM.map((item, index) => ({
     ...item,
     id: `static-${index}`,
-    status: item.week <= 3 ? 'completed' : (item.week <= 12 ? 'current' : 'upcoming')
+    status: item.week < currentWeek ? 'completed' : (item.week === currentWeek ? 'current' : 'upcoming')
   })) as RoadmapItem[];
 };
 
