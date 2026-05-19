@@ -9,44 +9,65 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
-
-const mockExercises: Exercise[] = [
-  {
-    id: '1',
-    title: 'Array Methods Practice',
-    description: 'Solve 5 problems using map, filter, and reduce.',
-    deadline: '2026-05-19T23:59:59Z',
-    gen: 'GEN10C2',
-    max_score: 100,
-    reference_link: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array'
-  },
-  {
-    id: '2',
-    title: 'TypeScript Interface Logic',
-    description: 'Define complex interfaces for a hypothetical library system.',
-    deadline: '2026-05-21T23:59:59Z',
-    gen: 'GEN10C2',
-    max_score: 100
-  }
-];
+import { getExercises, submitAssignment } from '@/services/dataService';
 
 export function Exercises() {
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [submissionLink, setSubmissionLink] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchExercises = async () => {
+      setLoading(true);
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const data = await getExercises(user.gen);
+          setExercises(data);
+        }
+      } catch (error) {
+        console.error("Failed to load exercises:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExercises();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!submissionLink) return;
-    toast.success("Exercise submitted!");
-    setIsSubmitOpen(false);
-    setSubmissionLink('');
+    if (!submissionLink || !selectedExercise) return;
+    
+    try {
+      await submitAssignment(selectedExercise.id, submissionLink);
+      toast.success("Exercise submitted successfully!");
+      setIsSubmitOpen(false);
+      setSubmissionLink('');
+    } catch (error) {
+      toast.error("Failed to submit exercise. Please try again.");
+    }
   };
 
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {mockExercises.map((exercise, i) => (
+        {loading ? (
+          <div className="col-span-full py-20 text-center flex justify-center">
+            <Activity className="w-10 h-10 text-amber-500 animate-spin" />
+          </div>
+        ) : exercises.length === 0 ? (
+          <div className="col-span-full py-20 text-center">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Activity className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 mb-2">No Practice Material</h3>
+            <p className="text-slate-500 font-medium">There are currently no exercises available for your cohort.</p>
+          </div>
+        ) : exercises.map((exercise, i) => (
           <motion.div
             key={exercise.id}
             initial={{ opacity: 0, y: 30 }}

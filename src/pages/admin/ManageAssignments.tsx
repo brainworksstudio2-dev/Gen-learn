@@ -92,7 +92,7 @@ export function ManageAssignments() {
         ]);
         setAssignments(assignmentsData);
         setSubmissions(submissionsData);
-        setRoadmap(roadmapData.filter(r => selectedGen === 'all' || r.gen === selectedGen));
+        setRoadmap(roadmapData);
       } catch (error) {
         console.error(error);
       } finally {

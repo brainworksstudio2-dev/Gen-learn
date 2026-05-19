@@ -13,7 +13,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/auth';
-import { RoadmapItem, Assignment, Material, Submission, User, Attendance } from '../types';
+import { RoadmapItem, Assignment, Material, Submission, User, Attendance, Exercise } from '../types';
 
 enum OperationType {
   CREATE = 'create',
@@ -141,6 +141,46 @@ export const updateAssignment = async (id: string, data: Partial<Assignment>) =>
   const path = `assignments/${id}`;
   try {
     const docRef = doc(db, 'assignments', id);
+    await updateDoc(docRef, data);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+};
+
+// --- Exercises ---
+export const getExercises = async (gen?: string): Promise<Exercise[]> => {
+  const path = 'exercises';
+  try {
+    const exercisesRef = collection(db, path);
+    let q;
+    
+    if (gen && gen !== 'all') {
+      q = query(exercisesRef, where('gen', 'in', [gen, 'all']), orderBy('deadline', 'asc'));
+    } else {
+      q = query(exercisesRef, orderBy('deadline', 'asc'));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Exercise));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return [];
+  }
+};
+
+export const addExercise = async (data: any) => {
+  const path = 'exercises';
+  try {
+    return await addDoc(collection(db, path), data);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+};
+
+export const updateExercise = async (id: string, data: Partial<Exercise>) => {
+  const path = `exercises/${id}`;
+  try {
+    const docRef = doc(db, 'exercises', id);
     await updateDoc(docRef, data);
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);

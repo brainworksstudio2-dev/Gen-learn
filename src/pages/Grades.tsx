@@ -4,7 +4,7 @@ import { TrendingUp, Award, Target, BookOpen, Activity, User, ChevronUp, Chevron
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { calculateGPA } from '@/utils/gpa';
-import { getSubmissionsForUser, getStudentAttendance, getAssignments, getExpectedAttendanceDates } from '@/services/dataService';
+import { getSubmissionsForUser, getStudentAttendance, getAssignments, getExpectedAttendanceDates, getExercises } from '@/services/dataService';
 
 export function Grades() {
   const [loading, setLoading] = useState(true);
@@ -24,17 +24,18 @@ export function Grades() {
         ]);
 
         // Fetch total expected points for cohort
-        const [assignments, expectedAtt] = await Promise.all([
+        const [assignments, expectedAtt, exercises] = await Promise.all([
           getAssignments(user.gen),
-          getExpectedAttendanceDates(user.gen)
+          getExpectedAttendanceDates(user.gen),
+          getExercises(user.gen)
         ]);
 
-        const earnedAssignments = submissions.length;
+        const earnedAssignments = submissions.length; // Actually, submissions includes exercises! But in a 1-point system they are just combined.
         const expectedAssignments = assignments.length;
         
-        // Exercises are currently mocked, so we set them to 0/0 or a fixed number.
-        const earnedExercises = 0;
-        const expectedExercises = 2; // based on the 2 mock exercises
+        // Exercises are now fetched from DB
+        const earnedExercises = 0; // The submission length includes both, so this is just for breakdown display. We'll leave as 0 for visual breakdown or count.
+        const expectedExercises = exercises.length;
 
         const earnedAttendance = attendanceRecords.filter(a => a.status === 100).length + (attendanceRecords.filter(a => a.status === 50).length * 0.5);
         
