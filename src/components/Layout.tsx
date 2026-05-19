@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  FileText, 
-  Activity, 
-  Calendar, 
-  Map, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  FileText,
+  Activity,
+  Calendar,
+  Map,
+  LogOut,
   User,
   GraduationCap,
   Settings,
@@ -100,17 +100,17 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden h-screen relative">
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 z-30 transition-opacity" 
+        <div
+          className="fixed inset-0 bg-black/40 z-30 transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "bg-white border-r border-slate-200 transition-all duration-300 ease-in-out h-full flex flex-col shrink-0",
-          isMobile 
+          isMobile
             ? "fixed inset-y-0 left-0 z-40 w-64 transform" + (isSidebarOpen ? " translate-x-0 shadow-2xl" : " -translate-x-full")
             : "z-20 static " + (isSidebarOpen ? "w-64" : "w-20")
         )}
@@ -139,8 +139,8 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
                 to={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                  location.pathname === item.href 
-                    ? "bg-indigo-50 text-indigo-700 font-bold" 
+                  location.pathname === item.href
+                    ? "bg-indigo-50 text-indigo-700 font-bold"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium"
                 )}
               >
@@ -182,24 +182,24 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
             </Link>
           )}
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden">
-             <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden shrink-0">
-                <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`} 
-                  alt="Avatar" 
-                  referrerPolicy="no-referrer"
-                />
-             </div>
-             {(isSidebarOpen || isMobile) && (
-               <div className="min-w-0 flex-1">
-                 <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
-                 <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{user?.gen}</p>
-               </div>
-             )}
-             {(isSidebarOpen || isMobile) && (
-               <button onClick={handleLogout} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1">
-                 <LogOut className="w-4 h-4 shrink-0" />
-               </button>
-             )}
+            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden shrink-0">
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                alt="Avatar"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            {(isSidebarOpen || isMobile) && (
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{user?.gen}</p>
+              </div>
+            )}
+            {(isSidebarOpen || isMobile) && (
+              <button onClick={handleLogout} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1">
+                <LogOut className="w-4 h-4 shrink-0" />
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -228,7 +228,7 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
             {admin && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm shrink-0">
                 <Users className="w-4 h-4 text-slate-400" />
-                <select 
+                <select
                   className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer p-0"
                   value={selectedGen}
                   onChange={(e) => setSelectedGen(e.target.value)}
@@ -237,6 +237,8 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
                   <option value="GEN30">GEN 30</option>
                   <option value="GEN31">GEN 31</option>
                   <option value="GEN32">GEN 32</option>
+                  <option value="GEN33">GEN 33</option>
+                  <option value="GEN34">GEN 34</option>
                 </select>
               </div>
             )}

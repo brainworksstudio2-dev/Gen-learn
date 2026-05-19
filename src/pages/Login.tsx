@@ -11,14 +11,18 @@ export function Login() {
 
   const handleGoogleLogin = async () => {
     try {
+      console.log("Starting Google login process...");
       const result = await googleSignIn('student');
+      console.log("Login successful, result:", result);
       if (result) {
         // The role and other info are now handled in googleSignIn and saved to profile
         toast.success(`Welcome, ${result.user.displayName}`);
+        console.log("Navigating to / ...");
         navigate('/');
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      console.error("Login Error details:", error);
+      toast.error(error.message || "Failed to sign in. Check console for details.");
     }
   };
 

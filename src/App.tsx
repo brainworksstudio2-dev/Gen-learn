@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
@@ -38,6 +38,7 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   const [loading, setLoading] = React.useState(!auth.currentUser);
   const [role, setRole] = React.useState<string | null>(null);
   const [hasGen, setHasGen] = React.useState<boolean>(false);
+  const location = useLocation();
 
   React.useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
@@ -68,10 +69,10 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   }
 
   if (!user) {
-    if (adminOnly || window.location.pathname.startsWith('/admin')) {
-      return <Navigate to="/admin/login" replace />;
+    if (adminOnly || location.pathname.startsWith('/admin')) {
+      return <Navigate to="/admin/login" replace state={{ from: location }} />;
     }
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (adminOnly && role !== 'admin') {
@@ -79,7 +80,7 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   }
 
   // Redirect student to onboarding if gen is missing
-  if (role === 'student' && !hasGen && window.location.pathname !== '/onboarding') {
+  if (role === 'student' && !hasGen && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
