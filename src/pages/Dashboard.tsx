@@ -61,7 +61,7 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] gap-4 bg-white rounded-5xl border border-slate-100">
+      <div className="flex flex-col items-center justify-center min-h-[600px] gap-4 bg-white rounded-5xl border border-slate-100 p-8 text-center">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
         <p className="text-slate-500 font-bold uppercase tracking-widest text-xs italic">Syncing Your Progress...</p>
       </div>
@@ -69,22 +69,22 @@ export function Dashboard() {
   }
 
   return (
-    <div className="grid grid-cols-12 grid-rows-6 gap-6 h-full min-h-[800px]">
+    <div className="grid grid-cols-1 md:grid-cols-12 md:grid-rows-6 gap-6 md:h-full md:min-h-[800px]">
       
       {/* GPA Card - The "Hero" of the Bento */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="col-span-12 lg:col-span-4 row-span-2 bg-indigo-600 rounded-5xl p-8 text-white flex flex-col justify-between shadow-2xl shadow-indigo-200 relative overflow-hidden"
+        className="col-span-1 md:col-span-12 lg:col-span-4 md:row-span-2 bg-indigo-600 rounded-5xl p-8 text-white flex flex-col justify-between shadow-2xl shadow-indigo-200 relative overflow-hidden"
       >
         <div className="relative z-10">
           <h3 className="text-indigo-100 text-sm font-bold uppercase tracking-widest">Cumulative GPA</h3>
-          <p className="text-7xl font-black mt-4">3.84</p>
+          <p className="text-5xl md:text-7xl font-black mt-4">3.84</p>
           <div className="mt-6 inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tight backdrop-blur-md">
             Academic Status: <span className="text-white">A+</span>
           </div>
         </div>
-        <div className="relative z-10 flex justify-between items-end">
+        <div className="relative z-10 flex justify-between items-end mt-8 md:mt-0">
           <div className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Top 15% of Cohort</div>
           <div className="w-16 h-16 rounded-full border-4 border-indigo-400 flex items-center justify-center text-xl font-black shadow-lg">82%</div>
         </div>
@@ -101,29 +101,29 @@ export function Dashboard() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
-        className="col-span-12 lg:col-span-7 row-span-4 bg-white border border-slate-200 rounded-5xl p-10 shadow-sm relative overflow-hidden group"
+        className="col-span-1 md:col-span-12 lg:col-span-7 md:row-span-4 bg-white border border-slate-200 rounded-5xl p-6 md:p-10 shadow-sm relative overflow-hidden group"
       >
-        <div className="flex justify-between items-start mb-10">
+        <div className="flex justify-between items-start mb-8 md:mb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100">
                 <Map className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-black text-2xl text-slate-900 uppercase italic tracking-tighter">Roadmap</h3>
+              <h3 className="font-black text-xl md:text-2xl text-slate-900 uppercase italic tracking-tighter">Roadmap</h3>
             </div>
-            <p className="text-sm text-slate-500 font-medium">Software Engineering Pathway • <span className="text-indigo-600 font-bold">{selectedGen === 'all' ? 'All Cohorts' : selectedGen}</span></p>
+            <p className="text-xs md:text-sm text-slate-500 font-medium">Software Engineering Pathway • <span className="text-indigo-600 font-bold">{selectedGen === 'all' ? 'All Cohorts' : selectedGen}</span></p>
           </div>
-          <Link to="/roadmap" className="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group-hover:translate-x-1">
-            <ChevronRight className="w-6 h-6 text-slate-400" />
+          <Link to="/roadmap" className="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all group-hover:translate-x-1 shrink-0">
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />
           </Link>
         </div>
 
-        <div className="space-y-8 relative">
+        <div className="space-y-6 md:space-y-8 relative">
           {roadmap.length > 0 ? roadmap.map((item, i) => (
-            <div key={item.id} className="flex gap-6 relative">
-              <div className="w-12 flex flex-col items-center shrink-0">
+            <div key={item.id} className="flex gap-4 md:gap-6 relative">
+              <div className="w-10 md:w-12 flex flex-col items-center shrink-0">
                 <div className={cn(
-                  "w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm transition-transform duration-300",
+                  "w-8 h-8 md:w-10 md:h-10 rounded-2xl flex items-center justify-center font-black text-xs md:text-sm shadow-sm transition-transform duration-300",
                   item.week < 3 ? "bg-emerald-100 text-emerald-600" : 
                   item.week === 3 ? "bg-indigo-600 text-white scale-110 shadow-indigo-200" : 
                   "bg-slate-100 text-slate-400"
@@ -132,21 +132,21 @@ export function Dashboard() {
                 </div>
                 {i < roadmap.length - 1 && <div className="w-1 h-12 bg-slate-100 mt-2 rounded-full" />}
               </div>
-              <div className="flex-1 pt-1">
+              <div className="flex-1 pt-0.5 md:pt-1">
                 <h4 className={cn(
-                  "font-black text-lg tracking-tight",
+                  "font-black text-base md:text-lg tracking-tight",
                   item.week > 3 ? "text-slate-300" : "text-slate-900"
                 )}>
                   {item.topic}
                 </h4>
                 <p className={cn(
-                  "text-[10px] font-black uppercase tracking-widest",
+                  "text-[9px] md:text-[10px] font-black uppercase tracking-widest",
                   item.week === 3 ? "text-indigo-600" : "text-slate-400"
                 )}>
                   {item.topic}
                 </p>
                 {item.project && (
-                   <p className="text-[9px] font-bold text-indigo-400 uppercase mt-1 italic line-clamp-1">Deliverable: {item.project}</p>
+                   <p className="text-[9px] font-bold text-indigo-400 uppercase mt-1 italic line-clamp-2 md:line-clamp-1">Deliverable: {item.project}</p>
                 )}
               </div>
             </div>
@@ -163,9 +163,9 @@ export function Dashboard() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3 }}
-        className="col-span-12 lg:col-span-5 row-span-3 bg-white border border-slate-200 rounded-5xl p-8 shadow-sm flex flex-col"
+        className="col-span-1 md:col-span-12 lg:col-span-5 md:row-span-3 bg-white border border-slate-200 rounded-5xl p-6 md:p-8 shadow-sm flex flex-col"
       >
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-6 md:mb-8">
             <div className="p-2 bg-orange-50 rounded-xl"><FileText className="w-5 h-5 text-orange-500" /></div>
             <h3 className="font-black text-slate-900 uppercase tracking-tight">Pending Work</h3>
         </div>
@@ -173,16 +173,16 @@ export function Dashboard() {
           {assignments.length > 0 ? assignments.map((assignment) => (
             <div key={assignment.id} className="flex items-center justify-between p-4 rounded-[28px] bg-slate-50 border border-slate-100 group hover:border-slate-300 transition-all cursor-pointer">
               <div className="flex gap-4 items-center">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
-                  <TrendingUp size={20} className="text-indigo-600" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
                 </div>
-                <div>
-                  <p className="text-sm font-black text-slate-900">{assignment.title}</p>
-                  <p className="text-[10px] text-red-500 font-black uppercase tracking-widest mt-0.5">Due {new Date(assignment.deadline).toLocaleDateString()}</p>
+                <div className="min-w-0">
+                  <p className="text-xs md:text-sm font-black text-slate-900 truncate">{assignment.title}</p>
+                  <p className="text-[9px] md:text-[10px] text-red-500 font-black uppercase tracking-widest mt-0.5">Due {new Date(assignment.deadline).toLocaleDateString()}</p>
                 </div>
               </div>
-              <Link to="/assignments" className="p-2 hover:bg-white rounded-xl transition-colors">
-                 <ChevronRight size={18} />
+              <Link to="/assignments" className="p-2 hover:bg-white rounded-xl transition-colors shrink-0">
+                 <ChevronRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
               </Link>
             </div>
           )) : (
@@ -197,7 +197,7 @@ export function Dashboard() {
       </motion.div>
 
       {/* Fast Stats Row */}
-      <div className="col-span-12 lg:col-span-5 row-span-1 grid grid-cols-2 gap-6">
+      <div className="col-span-1 md:col-span-12 lg:col-span-5 md:row-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,7 +207,7 @@ export function Dashboard() {
            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Attendance</p>
            <div className="flex items-center justify-between mt-2">
              <p className="text-2xl font-black text-white">94%</p>
-             <div className="w-10 h-10 rounded-full border-4 border-slate-800 border-t-emerald-500 animate-spin-slow"></div>
+             <div className="w-10 h-10 rounded-full border-4 border-slate-800 border-t-emerald-500 animate-spin-slow shrink-0"></div>
            </div>
         </motion.div>
         <motion.div 
