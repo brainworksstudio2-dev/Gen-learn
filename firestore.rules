@@ -128,5 +128,19 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidAttendance(incoming()) && (isAdmin() || incoming().student_id == request.auth.uid);
       allow update, delete: if isAdmin() && isValidAttendance(incoming());
     }
+
+    // --- Exercises ---
+    match /exercises/{exerciseId} {
+      function isValidExercise(data) {
+        return data.keys().hasAll(['title', 'deadline', 'gen']) &&
+               data.title is string && data.title.size() <= 200 &&
+               data.gen is string;
+      }
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidExercise(incoming());
+      allow update: if isAdmin() && isValidExercise(incoming());
+      allow delete: if isAdmin();
+    }
   }
 }
+

@@ -286,6 +286,7 @@ export const getAttendance = async (gen?: string): Promise<Attendance[]> => {
 };
 
 export const getExpectedAttendanceDates = async (gen: string): Promise<number> => {
+  if (!gen) return 0;
   const path = 'attendance';
   try {
     const q = query(collection(db, path), where('gen', '==', gen));
