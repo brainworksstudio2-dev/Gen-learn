@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { logout } from '@/lib/auth';
+
 interface NavItem {
   name: string;
   href: string;
@@ -91,8 +93,8 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
     checkUser();
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

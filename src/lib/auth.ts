@@ -35,8 +35,8 @@ provider.addScope('https://www.googleapis.com/auth/userinfo.email');
 
 // Flag to indicate if we are in the middle of a sign-in flow.
 let isSigningIn = false;
-// Cache the access token in memory.
-let cachedAccessToken: string | null = null;
+// Cache the access token in memory and local storage.
+let cachedAccessToken: string | null = localStorage.getItem('google_access_token');
 
 // Initialize auth state listener. Call this on app load.
 export const initAuth = (
@@ -51,10 +51,12 @@ export const initAuth = (
         // Token might be lost on refresh, need to re-sign in or handle refresh
         // For now, we'll just clear and show login
         cachedAccessToken = null;
+        localStorage.removeItem('google_access_token');
         if (onAuthFailure) onAuthFailure();
       }
     } else {
       cachedAccessToken = null;
+      localStorage.removeItem('google_access_token');
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -98,8 +100,11 @@ export const googleSignIn = async (desiredRole: 'student' | 'admin' = 'student')
     }
 
     localStorage.setItem('user', JSON.stringify(dbUser));
-    cachedAccessToken = credential.accessToken;
-    return { user: result.user, accessToken: cachedAccessToken };
+    if (credential.accessToken) {
+      localStorage.setItem('google_access_token', credential.accessToken);
+      cachedAccessToken = credential.accessToken;
+    }
+    return { user: result.user, accessToken: cachedAccessToken || '' };
   } catch (error: any) {
     if (error.code === 'auth/unauthorized-domain') {
       console.error('Domain not authorized in Firebase Console:', window.location.hostname);
@@ -134,6 +139,13 @@ export const promoteCurrentUserToAdmin = async () => {
 };
 
 export const logout = async () => {
-  await auth.signOut();
+  try {
+    await auth.signOut();
+  } catch (error) {
+    console.error("Sign out error:", error);
+  }
   cachedAccessToken = null;
+  localStorage.removeItem('user');
+  localStorage.removeItem('google_access_token');
+  localStorage.removeItem('admin_selected_gen');
 };
