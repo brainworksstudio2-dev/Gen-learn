@@ -44,7 +44,7 @@ export function Dashboard() {
         const genFilter = selectedGen === 'all' ? undefined : selectedGen;
         
         const [roadmapData, assignmentsData] = await Promise.all([
-          getRoadmap(),
+          getRoadmap(user.role === 'admin' ? genFilter : user.gen),
           getAssignments(genFilter)
         ]);
         

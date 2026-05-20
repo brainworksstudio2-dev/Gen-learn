@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Users
 } from 'lucide-react';
-import { getRoadmap, updateCohortProgress } from '@/services/dataService';
+import { getRoadmap, updateCohortProgress, getCohortProgressDetails, updateCohortCompletedWeeks } from '@/services/dataService';
 import { RoadmapItem } from '@/types';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function ManageRoadmap() {
   const [roadmap, setRoadmap] = useState<RoadmapItem[]>([]);
+  const [completedWeeks, setCompletedWeeks] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGen, setSelectedGen] = useState<string>('GEN30');
   const [updating, setUpdating] = useState<number | null>(null);
@@ -28,8 +29,12 @@ export function ManageRoadmap() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await getRoadmap(selectedGen);
-      setRoadmap(data.sort((a, b) => a.week - b.week));
+      const [roadmapData, progressDetails] = await Promise.all([
+        getRoadmap(selectedGen),
+        getCohortProgressDetails(selectedGen)
+      ]);
+      setRoadmap(roadmapData.sort((a, b) => a.week - b.week));
+      setCompletedWeeks(progressDetails.completedWeeks);
     } catch (error) {
       console.error(error);
     } finally {
@@ -53,6 +58,31 @@ export function ManageRoadmap() {
       fetchData();
     } catch (error: any) {
       toast.error(error.message || "Failed to update progress");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleToggleComplete = async (week: number) => {
+    if (selectedGen === 'all') {
+      toast.error("Please select a specific cohort to update progress.");
+      return;
+    }
+    
+    let updatedCompletedWeeks: number[];
+    if (completedWeeks.includes(week)) {
+      updatedCompletedWeeks = completedWeeks.filter(w => w !== week);
+    } else {
+      updatedCompletedWeeks = [...completedWeeks, week];
+    }
+    
+    setUpdating(week);
+    try {
+      await updateCohortCompletedWeeks(selectedGen, updatedCompletedWeeks);
+      toast.success(`Updated milestone completion status`);
+      await fetchData();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update milestone completion");
     } finally {
       setUpdating(null);
     }
@@ -158,9 +188,30 @@ export function ManageRoadmap() {
                            </div>
                          )}
                        </div>
-                    </div>
+                     </div>
                     
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-4">
+                      {/* Checkbox toggle for completed state */}
+                      <button
+                        disabled={updating === item.week}
+                        onClick={() => handleToggleComplete(item.week)}
+                        className={cn(
+                          "flex items-center justify-center w-8 h-8 rounded-xl transition-all border",
+                          completedWeeks.includes(item.week)
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-100"
+                            : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600"
+                        )}
+                        title={completedWeeks.includes(item.week) ? "Mark Incomplete" : "Mark Completed"}
+                      >
+                        {updating === item.week ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-current" />
+                        ) : completedWeeks.includes(item.week) ? (
+                          <CheckCircle2 className="w-4 h-4" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border-2 border-current" />
+                        )}
+                      </button>
+
                       <Button
                         variant={item.status === 'current' ? "default" : "outline"}
                         size="sm"
@@ -168,17 +219,18 @@ export function ManageRoadmap() {
                         onClick={() => handleUpdateProgress(item.week)}
                         className={cn(
                           "rounded-xl font-black uppercase tracking-widest text-[10px] h-8",
-                          item.status === 'current' ? "bg-emerald-500 text-white opacity-100" : ""
+                          item.status === 'current' ? "bg-indigo-600 text-white opacity-100" : ""
                         )}
                       >
                         {updating === item.week ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : item.status === 'current' ? (
                           <>
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Active
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1.5" />
+                            Active
                           </>
                         ) : (
-                          "Set Current"
+                          "Set Active"
                         )}
                       </Button>
                     </div>

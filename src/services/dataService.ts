@@ -65,19 +65,33 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 import { OFFICIAL_CURRICULUM } from '../constants';
 
 // --- Curriculum (Roadmap) ---
-export const getCohortProgress = async (gen: string): Promise<number> => {
-  if (!gen || gen === 'all') return 1;
+export interface CohortProgressDetails {
+  currentWeek: number;
+  completedWeeks: number[];
+}
+
+export const getCohortProgressDetails = async (gen: string): Promise<CohortProgressDetails> => {
+  if (!gen || gen === 'all') return { currentWeek: 1, completedWeeks: [] };
   try {
     const docRef = doc(db, 'cohortProgress', gen);
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      return snap.data().currentWeek || 1;
+      const data = snap.data();
+      return {
+        currentWeek: data.currentWeek || 1,
+        completedWeeks: data.completedWeeks || []
+      };
     }
-    return 1;
+    return { currentWeek: 1, completedWeeks: [] };
   } catch (error) {
-    console.error("Failed to get cohort progress:", error);
-    return 1;
+    console.error("Failed to get cohort progress details:", error);
+    return { currentWeek: 1, completedWeeks: [] };
   }
+};
+
+export const getCohortProgress = async (gen: string): Promise<number> => {
+  const details = await getCohortProgressDetails(gen);
+  return details.currentWeek;
 };
 
 export const updateCohortProgress = async (gen: string, week: number) => {
@@ -90,18 +104,41 @@ export const updateCohortProgress = async (gen: string, week: number) => {
   }
 };
 
+export const updateCohortCompletedWeeks = async (gen: string, completedWeeks: number[]) => {
+  const path = `cohortProgress/${gen}`;
+  try {
+    const docRef = doc(db, 'cohortProgress', gen);
+    await setDoc(docRef, { completedWeeks, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+};
+
 export const getRoadmap = async (gen?: string): Promise<RoadmapItem[]> => {
   let currentWeek = 1; // Default
+  let completedWeeks: number[] = [];
   if (gen && gen !== 'all') {
-    currentWeek = await getCohortProgress(gen);
+    const details = await getCohortProgressDetails(gen);
+    currentWeek = details.currentWeek;
+    completedWeeks = details.completedWeeks;
   }
 
-  // Return hardcoded curriculum mapped with dynamic status based on currentWeek
-  return OFFICIAL_CURRICULUM.map((item, index) => ({
-    ...item,
-    id: `static-${index}`,
-    status: item.week < currentWeek ? 'completed' : (item.week === currentWeek ? 'current' : 'upcoming')
-  })) as RoadmapItem[];
+  // Return hardcoded curriculum mapped with dynamic status based on completedWeeks
+  return OFFICIAL_CURRICULUM.map((item, index) => {
+    let status: 'completed' | 'current' | 'upcoming' = 'upcoming';
+    if (completedWeeks.includes(item.week)) {
+      status = 'completed';
+    } else if (item.week === currentWeek) {
+      status = 'current';
+    } else if (item.week < currentWeek) {
+      status = 'completed';
+    }
+    return {
+      ...item,
+      id: `static-${index}`,
+      status
+    } as RoadmapItem;
+  });
 };
 
 // --- Assignments ---
