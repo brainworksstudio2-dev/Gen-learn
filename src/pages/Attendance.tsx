@@ -13,12 +13,13 @@ export function Attendance() {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user.uid || user.id;
 
   const fetchAttendance = async () => {
-    if (!user.id) return;
+    if (!userId) return;
     setLoading(true);
     try {
-      const data = await getStudentAttendance(user.id);
+      const data = await getStudentAttendance(userId);
       setAttendance(data);
     } catch (error) {
       console.error(error);
@@ -29,7 +30,7 @@ export function Attendance() {
 
   useEffect(() => {
     fetchAttendance();
-  }, [user.id]);
+  }, [userId]);
 
   const handleMarkAttendance = async () => {
     setMarking(true);
