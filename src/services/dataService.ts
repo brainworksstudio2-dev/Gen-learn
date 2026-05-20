@@ -354,10 +354,27 @@ export const getStudentAttendance = async (studentId: string): Promise<Attendanc
   }
 };
 
-export const markStudentAttendance = async (gen: string) => {
+export const markStudentAttendance = async (gen?: string) => {
   if (!auth.currentUser) throw new Error("Not authenticated");
   const path = 'attendance';
   const today = new Date().toISOString().split('T')[0];
+  
+  let finalGen = gen;
+  if (!finalGen || finalGen === 'undefined') {
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        finalGen = userSnap.data().gen;
+      }
+    } catch (e) {
+      console.error("Failed to fetch user cohort from Firestore:", e);
+    }
+  }
+
+  if (!finalGen || finalGen === 'undefined') {
+    throw new Error("Your cohort generation (GEN) is not set. Please set it in onboarding or contact support.");
+  }
   
   try {
     // Check if already marked today
@@ -374,7 +391,7 @@ export const markStudentAttendance = async (gen: string) => {
     const newRecord = {
       student_id: auth.currentUser.uid,
       date: today,
-      gen: gen,
+      gen: finalGen,
       status: 100,
       score: 100,
       timestamp: new Date().toISOString()
