@@ -150,15 +150,14 @@ export const getAssignments = async (gen?: string): Promise<Assignment[]> => {
     
     if (gen && gen !== 'all') {
       // Fetch both specific gen and 'all'
-      // Note: This requires an 'in' query or two separate calls. 
-      // Firestore 'in' has limits but for 2 values it's fine.
-      q = query(assignmentsRef, where('gen', 'in', [gen, 'all']), orderBy('deadline', 'asc'));
+      q = query(assignmentsRef, where('gen', 'in', [gen, 'all']));
     } else {
-      q = query(assignmentsRef, orderBy('deadline', 'asc'));
+      q = query(assignmentsRef);
     }
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Assignment));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Assignment))
+      .sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime());
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];
@@ -192,13 +191,14 @@ export const getExercises = async (gen?: string): Promise<Exercise[]> => {
     let q;
     
     if (gen && gen !== 'all') {
-      q = query(exercisesRef, where('gen', 'in', [gen, 'all']), orderBy('deadline', 'asc'));
+      q = query(exercisesRef, where('gen', 'in', [gen, 'all']));
     } else {
-      q = query(exercisesRef, orderBy('deadline', 'asc'));
+      q = query(exercisesRef);
     }
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Exercise));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Exercise))
+      .sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime());
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];
@@ -232,13 +232,14 @@ export const getMaterials = async (gen?: string): Promise<Material[]> => {
     let q;
     
     if (gen && gen !== 'all') {
-      q = query(materialsRef, where('gen', 'in', [gen, 'all']), orderBy('week', 'asc'));
+      q = query(materialsRef, where('gen', 'in', [gen, 'all']));
     } else {
-      q = query(materialsRef, orderBy('week', 'asc'));
+      q = query(materialsRef);
     }
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Material));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Material))
+      .sort((a, b) => (Number(a.week) || 0) - (Number(b.week) || 0));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];

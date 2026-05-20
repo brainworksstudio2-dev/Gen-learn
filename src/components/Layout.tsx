@@ -36,9 +36,10 @@ const studentNavItems: NavItem[] = [
   { name: 'Assignments', href: '/assignments', icon: FileText },
   { name: 'Exercises', href: '/exercises', icon: Activity },
   { name: 'Grades & GPA', href: '/grades', icon: TrendingUp },
-  { name: 'Attendance', href: '/attendance', icon: User },
+  { name: 'Attendance', href: '/attendance', icon: CheckCircle2 },
   { name: 'Schedule', href: '/schedule', icon: Calendar },
   { name: 'Roadmap', href: '/roadmap', icon: Map },
+  { name: 'My Profile', href: '/profile', icon: User },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -51,6 +52,7 @@ const adminNavItems: NavItem[] = [
   { name: 'Roadmap', href: '/admin/roadmap', icon: Map },
   { name: 'Performance', href: '/admin/performance', icon: TrendingUp },
   { name: 'Reports', href: '/admin/reports', icon: FileText },
+  { name: 'My Profile', href: '/admin/profile', icon: User },
 ];
 
 export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) {
@@ -184,21 +186,26 @@ export function Layout({ admin = false }: { admin?: boolean; key?: React.Key }) 
             </Link>
           )}
           <div className="flex items-center gap-3 p-2 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden">
-            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden shrink-0">
-              <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
-                alt="Avatar"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            {(isSidebarOpen || isMobile) && (
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{user?.gen}</p>
+            <Link 
+              to={admin ? '/admin/profile' : '/profile'} 
+              className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-85 transition-all group/avatar"
+            >
+              <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white group-hover/avatar:border-indigo-400 shadow-sm overflow-hidden shrink-0 transition-colors">
+                <img
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                  alt="Avatar"
+                  referrerPolicy="no-referrer"
+                />
               </div>
-            )}
+              {(isSidebarOpen || isMobile) && (
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-slate-900 truncate group-hover/avatar:text-indigo-600 transition-colors">{user?.name}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{user?.gen || (user?.role === 'admin' ? 'Admin' : 'Student')}</p>
+                </div>
+              )}
+            </Link>
             {(isSidebarOpen || isMobile) && (
-              <button onClick={handleLogout} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1">
+              <button onClick={handleLogout} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1 shrink-0">
                 <LogOut className="w-4 h-4 shrink-0" />
               </button>
             )}

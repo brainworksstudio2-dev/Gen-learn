@@ -7,16 +7,20 @@ import { CheckCircle2, XCircle, Clock, Percent, Loader2, CalendarPlus } from 'lu
 import type { Attendance as AttendanceType } from '@/types';
 import { getStudentAttendance, markStudentAttendance } from '@/services/dataService';
 import { toast } from 'sonner';
+import { auth } from '@/lib/auth';
 
 export function Attendance() {
   const [attendance, setAttendance] = useState<AttendanceType[]>([]);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = user.uid || user.id;
+  const userId = user.uid || user.id || auth.currentUser?.uid;
 
   const fetchAttendance = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const data = await getStudentAttendance(userId);

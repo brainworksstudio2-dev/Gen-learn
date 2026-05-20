@@ -18,6 +18,7 @@ import { Schedule } from './pages/Schedule';
 import { Roadmap } from './pages/Roadmap';
 import { Grades } from './pages/Grades';
 import { Onboarding } from './pages/Onboarding';
+import { Profile } from './pages/Profile';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -30,8 +31,9 @@ import { ManageRoadmap } from './pages/admin/ManageRoadmap';
 import { Performance } from './pages/admin/Performance';
 import { Reports } from './pages/admin/Reports';
 
-import { auth } from './lib/auth';
+import { auth, db } from './lib/auth';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
   const [user, setUser] = React.useState<User | null>(auth.currentUser);
@@ -41,19 +43,42 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   const location = useLocation();
 
   React.useEffect(() => {
-    return onAuthStateChanged(auth, (u) => {
+    return onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
         const localUserStr = localStorage.getItem('user');
+        let localUser = null;
         if (localUserStr) {
-          const localUser = JSON.parse(localUserStr);
-          setRole(localUser.role || 'student');
-          setHasGen(!!localUser.gen);
-        } else {
-           // If no local user, we'll likely need to fetch from firestore, 
-           // but for now let's assume it was set during sign-in
-           setRole('student');
-           setHasGen(false);
+          try {
+            localUser = JSON.parse(localUserStr);
+            setRole(localUser.role || 'student');
+            setHasGen(!!localUser.gen);
+            setLoading(false);
+          } catch (e) {
+            console.error("Failed to parse local user:", e);
+          }
+        }
+
+        try {
+          const userRef = doc(db, 'users', u.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const freshUser = userSnap.data();
+            localStorage.setItem('user', JSON.stringify(freshUser));
+            setRole(freshUser.role || 'student');
+            setHasGen(!!freshUser.gen);
+          } else {
+            if (!localUser) {
+              setRole('student');
+              setHasGen(false);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading user profile from Firestore:", error);
+          if (!localUser) {
+            setRole('student');
+            setHasGen(false);
+          }
         }
       }
       setLoading(false);
@@ -107,6 +132,7 @@ export default function App() {
           <Route path="roadmap" element={<ManageRoadmap />} />
           <Route path="performance" element={<Performance />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Student Routes */}
@@ -119,6 +145,7 @@ export default function App() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/grades" element={<Grades />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
