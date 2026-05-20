@@ -307,16 +307,33 @@ export const getAllSubmissions = async (): Promise<Submission[]> => {
   }
 };
 
+export const gradeSubmission = async (submissionId: string, score: number, feedback: string) => {
+  const path = `submissions/${submissionId}`;
+  try {
+    const docRef = doc(db, 'submissions', submissionId);
+    await updateDoc(docRef, {
+      score,
+      feedback,
+      status: 'graded'
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+};
+
 // --- Attendance ---
 export const getAttendance = async (gen?: string): Promise<Attendance[]> => {
   const path = 'attendance';
   try {
-    let q = query(collection(db, path), orderBy('date', 'desc'));
-    if (gen) {
-      q = query(q, where('gen', '==', gen));
+    let q;
+    if (gen && gen !== 'all') {
+      q = query(collection(db, path), where('gen', '==', gen));
+    } else {
+      q = query(collection(db, path));
     }
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Attendance));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) } as Attendance))
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];

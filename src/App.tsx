@@ -30,6 +30,7 @@ import { ManageSchedule } from './pages/admin/ManageSchedule';
 import { ManageRoadmap } from './pages/admin/ManageRoadmap';
 import { Performance } from './pages/admin/Performance';
 import { Reports } from './pages/admin/Reports';
+import { GradeRegister } from './pages/admin/GradeRegister';
 
 import { auth, db } from './lib/auth';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -132,6 +133,7 @@ export default function App() {
           <Route path="roadmap" element={<ManageRoadmap />} />
           <Route path="performance" element={<Performance />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="register" element={<GradeRegister />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

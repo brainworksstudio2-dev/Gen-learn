@@ -15,8 +15,8 @@ import {
   ChevronRight,
   GraduationCap
 } from 'lucide-react';
-import { getAssignments, getAllSubmissions, getRoadmap, addAssignment } from '@/services/dataService';
-import { Assignment, Submission, RoadmapItem } from '@/types';
+import { getAssignments, getAllSubmissions, getRoadmap, addAssignment, getAllProfiles, gradeSubmission } from '@/services/dataService';
+import { Assignment, Submission, RoadmapItem, User } from '@/types';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,11 @@ export function ManageAssignments() {
     moduleId: ''
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [students, setStudents] = useState<User[]>([]);
+  const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
+  const [gradeScore, setGradeScore] = useState<number>(0);
+  const [gradeFeedback, setGradeFeedback] = useState<string>('');
+  const [isGradingSave, setIsGradingSave] = useState(false);
 
   useEffect(() => {
     setNewAssignment(prev => ({ ...prev, gen: selectedGen === 'all' ? 'GEN30' : selectedGen }));
@@ -74,6 +79,24 @@ export function ManageAssignments() {
     }
   };
 
+  const handleGradeSave = async () => {
+    if (!gradingSubmission) return;
+    setIsGradingSave(true);
+    try {
+      await gradeSubmission(gradingSubmission.id, gradeScore, gradeFeedback);
+      toast.success("Submission graded successfully!");
+      setGradingSubmission(null);
+      // Refresh submissions
+      const subsData = await getAllSubmissions();
+      setSubmissions(subsData);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to save grade");
+    } finally {
+      setIsGradingSave(false);
+    }
+  };
+
   useEffect(() => {
     const handleGenChange = (e: any) => setSelectedGen(e.detail);
     window.addEventListener('admin_gen_changed', handleGenChange);
@@ -85,14 +108,16 @@ export function ManageAssignments() {
       setLoading(true);
       try {
         const genFilter = selectedGen === 'all' ? undefined : selectedGen;
-        const [assignmentsData, submissionsData, roadmapData] = await Promise.all([
+        const [assignmentsData, submissionsData, roadmapData, profilesData] = await Promise.all([
           getAssignments(genFilter),
           getAllSubmissions(),
-          getRoadmap()
+          getRoadmap(),
+          getAllProfiles()
         ]);
         setAssignments(assignmentsData);
         setSubmissions(submissionsData);
         setRoadmap(roadmapData);
+        setStudents(profilesData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -321,42 +346,69 @@ export function ManageAssignments() {
                   <tr className="bg-slate-50 border-b border-slate-100">
                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Student</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Assignment</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status / Score</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 font-medium text-sm">
                   {submissions.length > 0 ? submissions.map((sub) => {
+                    const student = students.find(s => s.uid === sub.student_id || s.id === sub.student_id);
                     const assignment = assignments.find(a => a.id === sub.assignment_id);
                     if (!assignment && selectedGen !== 'all') return null;
+
+                    const isGraded = sub.score !== undefined && sub.score !== null;
 
                     return (
                       <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 overflow-hidden">
-                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${sub.student_id}`} alt="sub" referrerPolicy="no-referrer" />
+                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student?.name || sub.student_id}`} alt="sub" referrerPolicy="no-referrer" />
                             </div>
-                            <span className="font-bold text-slate-900">Student #{sub.student_id.slice(-4)}</span>
+                            <div>
+                              <p className="font-bold text-slate-900">{student?.name || `Student #${sub.student_id.slice(-4)}`}</p>
+                              <p className="text-[10px] text-slate-400">{student?.email || 'No email'}</p>
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-slate-900 font-bold">{assignment?.title || 'Unknown Assignment'}</p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase">{assignment?.gen}</p>
                         </td>
+                        <td className="px-6 py-4">
+                          {isGraded ? (
+                            <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-100 font-black text-[9px] uppercase tracking-widest rounded-lg shadow-none">
+                              Graded: {sub.score}/{assignment?.max_score || 100}
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-100 font-black text-[9px] uppercase tracking-widest rounded-lg shadow-none">
+                              Pending
+                            </Badge>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-slate-500">
                           {new Date(sub.submitted_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="sm" className="rounded-xl font-bold gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50">
-                            View Work <ChevronRight size={14} />
+                          <Button 
+                            onClick={() => {
+                              setGradingSubmission(sub);
+                              setGradeScore(sub.score || 0);
+                              setGradeFeedback(sub.feedback || '');
+                            }}
+                            variant="ghost" 
+                            size="sm" 
+                            className="rounded-xl font-bold gap-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                          >
+                            Grade Work <ChevronRight size={14} />
                           </Button>
                         </td>
                       </tr>
                     );
                   }) : (
                     <tr>
-                      <td colSpan={4} className="px-6 py-20 text-center">
+                      <td colSpan={5} className="px-6 py-20 text-center">
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No submissions yet</p>
                       </td>
                     </tr>
@@ -365,6 +417,79 @@ export function ManageAssignments() {
               </table>
             </CardContent>
           </Card>
+
+          <Dialog open={!!gradingSubmission} onOpenChange={(open) => { if (!open) setGradingSubmission(null); }}>
+            <DialogContent className="sm:max-w-xl rounded-3xl p-8 border-0 shadow-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-black uppercase italic">Grade Submission</DialogTitle>
+                <DialogDescription className="font-medium text-slate-500">
+                  Assess and submit feedback for this student's task.
+                </DialogDescription>
+              </DialogHeader>
+
+              {gradingSubmission && (() => {
+                const student = students.find(s => s.uid === gradingSubmission.student_id || s.id === gradingSubmission.student_id);
+                const assignment = assignments.find(a => a.id === gradingSubmission.assignment_id);
+                return (
+                  <div className="space-y-6 pt-6">
+                    <div className="bg-slate-50 p-4 rounded-2xl space-y-2 text-sm font-medium">
+                      <p><span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider block">Student Name</span> {student?.name || `Student #${gradingSubmission.student_id.slice(-4)}`}</p>
+                      <p><span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider block">Student Email</span> {student?.email || '—'}</p>
+                      <p><span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider block">Assignment</span> {assignment?.title}</p>
+                      <p><span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider block">Submitted Link</span> 
+                        <a 
+                          href={gradingSubmission.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-indigo-600 hover:text-indigo-700 underline break-all font-bold inline-block mt-1 animate-pulse"
+                        >
+                          {gradingSubmission.link}
+                        </a>
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">
+                          Score (Max: {assignment?.max_score || 100})
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max={assignment?.max_score || 100}
+                          className="h-14 rounded-2xl bg-slate-50 border-0 font-bold"
+                          value={gradeScore}
+                          onChange={(e) => setGradeScore(Math.min(parseInt(e.target.value) || 0, assignment?.max_score || 100))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="font-bold text-[10px] uppercase text-slate-400 tracking-widest">
+                          Feedback / Comments
+                        </Label>
+                        <Textarea
+                          placeholder="Provide constructive feedback..."
+                          className="min-h-[100px] rounded-2xl bg-slate-50 border-0 font-medium"
+                          value={gradeFeedback}
+                          onChange={(e) => setGradeFeedback(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter className="pt-4">
+                      <Button
+                        onClick={handleGradeSave}
+                        className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-black uppercase tracking-tight text-white shadow-xl shadow-indigo-100"
+                        disabled={isGradingSave}
+                      >
+                        {isGradingSave ? <Loader2 className="animate-spin" /> : 'Save Grade'}
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
       </Tabs>
     </div>

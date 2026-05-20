@@ -16,7 +16,8 @@ import {
   X,
   ChevronRight,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  TableProperties
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -53,6 +54,7 @@ const adminNavItems: NavItem[] = [
   { name: 'Roadmap', href: '/admin/roadmap', icon: Map },
   { name: 'Performance', href: '/admin/performance', icon: TrendingUp },
   { name: 'Reports', href: '/admin/reports', icon: FileText },
+  { name: 'Grade Register', href: '/admin/register', icon: TableProperties },
   { name: 'My Profile', href: '/admin/profile', icon: User },
 ];
 
