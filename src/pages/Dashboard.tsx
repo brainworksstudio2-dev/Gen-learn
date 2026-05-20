@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import { getRoadmap, getAssignments } from '@/services/dataService';
+import { getRoadmap, getAssignments, getSubmissionsForUser, getStudentAttendance, getExpectedAttendanceDates, getExercises } from '@/services/dataService';
+import { calculateGPA } from '@/utils/gpa';
 import { RoadmapItem, Assignment } from '@/types';
 
 import { CalendarPanel } from '@/components/CalendarPanel';
@@ -13,6 +14,7 @@ import { CalendarPanel } from '@/components/CalendarPanel';
 export function Dashboard() {
   const [roadmap, setRoadmap] = useState<RoadmapItem[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [gpaResult, setGpaResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGen, setSelectedGen] = useState(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -37,7 +39,10 @@ export function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = user.uid || user.id;
         const genFilter = selectedGen === 'all' ? undefined : selectedGen;
+        
         const [roadmapData, assignmentsData] = await Promise.all([
           getRoadmap(),
           getAssignments(genFilter)
@@ -50,6 +55,29 @@ export function Dashboard() {
         
         setRoadmap(filteredRoadmap.slice(0, 3)); 
         setAssignments(assignmentsData.slice(0, 2));
+
+        if (userId && user.role === 'student') {
+          const [submissions, attendanceRecords, allAssignments, expectedAtt, exercises] = await Promise.all([
+            getSubmissionsForUser(userId),
+            getStudentAttendance(userId),
+            getAssignments(user.gen),
+            getExpectedAttendanceDates(user.gen),
+            getExercises(user.gen)
+          ]);
+
+          const earnedAssignments = submissions.length;
+          const expectedAssignments = allAssignments.length;
+          const earnedExercises = 0;
+          const expectedExercises = exercises.length;
+          const earnedAttendance = attendanceRecords.filter(a => a.status === 100).length + (attendanceRecords.filter(a => a.status === 50).length * 0.5);
+
+          const result = calculateGPA(
+            earnedAssignments, expectedAssignments,
+            earnedExercises, expectedExercises,
+            earnedAttendance, expectedAtt
+          );
+          setGpaResult(result);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -79,14 +107,18 @@ export function Dashboard() {
       >
         <div className="relative z-10">
           <h3 className="text-indigo-100 text-sm font-bold uppercase tracking-widest">Cumulative GPA</h3>
-          <p className="text-5xl md:text-7xl font-black mt-4">3.84</p>
+          <p className="text-5xl md:text-7xl font-black mt-4">
+            {gpaResult ? gpaResult.gpa.toFixed(2) : "—"}
+          </p>
           <div className="mt-6 inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-tight backdrop-blur-md">
-            Academic Status: <span className="text-white">A+</span>
+            Academic Status: <span className="text-white">{gpaResult ? gpaResult.grade : "—"}</span>
           </div>
         </div>
         <div className="relative z-10 flex justify-between items-end mt-8 md:mt-0">
-          <div className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Top 15% of Cohort</div>
-          <div className="w-16 h-16 rounded-full border-4 border-indigo-400 flex items-center justify-center text-xl font-black shadow-lg">82%</div>
+          <div className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Overall Score</div>
+          <div className="w-16 h-16 rounded-full border-4 border-indigo-400 flex items-center justify-center text-xl font-black shadow-lg">
+            {gpaResult ? `${Math.round(gpaResult.finalScore)}%` : "—%"}
+          </div>
         </div>
         {/* Abstract background shapes */}
         <div className="absolute -right-12 -top-12 w-48 h-48 bg-indigo-500/30 rounded-full blur-3xl"></div>
@@ -206,7 +238,11 @@ export function Dashboard() {
         >
            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Attendance</p>
            <div className="flex items-center justify-between mt-2">
-             <p className="text-2xl font-black text-white">94%</p>
+             <p className="text-2xl font-black text-white">
+               {gpaResult && gpaResult.breakdown.attendance.expected > 0 
+                 ? `${Math.round((gpaResult.breakdown.attendance.earned / gpaResult.breakdown.attendance.expected) * 100)}%` 
+                 : "—%"}
+             </p>
              <div className="w-10 h-10 rounded-full border-4 border-slate-800 border-t-emerald-500 animate-spin-slow shrink-0"></div>
            </div>
         </motion.div>
@@ -218,7 +254,11 @@ export function Dashboard() {
         >
            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest relative z-10">Exercises</p>
            <div className="flex items-center justify-between mt-2 relative z-10">
-             <p className="text-2xl font-black text-slate-900">12/15</p>
+             <p className="text-2xl font-black text-slate-900">
+               {gpaResult && gpaResult.breakdown.exercises.expected > 0 
+                 ? `${gpaResult.breakdown.exercises.earned}/${gpaResult.breakdown.exercises.expected}` 
+                 : "—"}
+             </p>
              <div className="bg-amber-50 text-amber-600 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest group-hover:scale-110 transition-transform">
                Active
              </div>
